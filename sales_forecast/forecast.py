@@ -1,11 +1,9 @@
-# sales_forecast/forecast.py
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
-from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 
 class SalesForecaster:
@@ -38,21 +36,21 @@ class SalesForecaster:
         monthly_data = monthly_data[
             (monthly_data["avg_check"] >= lower_bound) & (monthly_data["avg_check"] <= upper_bound)]
 
-        # Подготовка данных для прогноза
+        # Подготовка данных для регрессии
         months = monthly_data[["month_number"]].values
         forecast_months = np.arange(37, 49).reshape(-1, 1)
 
         forecast = {}
         for column in ["checks", "avg_check", "total_sales"]:
-            model = SARIMAX(monthly_data[column], order=(1, 1, 1), seasonal_order=(1, 1, 1, 12))
-            sarima_result = model.fit(disp=False)
-            forecast[column] = sarima_result.forecast(steps=12)
+            model = make_pipeline(PolynomialFeatures(degree=2), LinearRegression())
+            model.fit(months, monthly_data[column])
+            forecast[column] = model.predict(forecast_months)
 
         # Создаем DataFrame с прогнозами
         self.forecast_df = pd.DataFrame(forecast_months, columns=["month_number"])
-        self.forecast_df["Количество чеков"] = forecast["checks"].values
-        self.forecast_df["Средняя сумма чека"] = forecast["avg_check"].values
-        self.forecast_df["Общая сумма продаж"] = forecast["total_sales"].values
+        self.forecast_df["Количество чеков"] = forecast["checks"]
+        self.forecast_df["Средняя сумма чека"] = forecast["avg_check"]
+        self.forecast_df["Общая сумма продаж"] = forecast["total_sales"]
 
         # Преобразуем "month_number" в дату
         base_year = 2022
