@@ -1,7 +1,9 @@
+
 # sales_forecast/forecast.py
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
@@ -44,7 +46,7 @@ class SalesForecaster:
 
         forecast = {}
         for column in ["checks", "avg_check", "total_sales"]:
-            model = SARIMAX(monthly_data[column], order=(1, 1, 1), seasonal_order=(1, 1, 1, 12))
+            model = SARIMAX(monthly_data[column], order=(1, 1, 1), seasonal_order=(0, 1, 1, 12))
             sarima_result = model.fit(disp=False)
             forecast[column] = sarima_result.forecast(steps=12)
 
@@ -90,10 +92,22 @@ class SalesForecaster:
         forecast_sales = self.forecast_df.set_index("Дата")["Общая сумма продаж"]
 
         plt.figure(figsize=(12, 5))
-        plt.plot(historical_sales.index, historical_sales.values, label="Фактические данные (2022–2024)", marker="o")
-        plt.plot(range(37, 49), forecast_sales.values, label="Прогноз 2025", marker="o", linestyle="dashed")
 
-        plt.xlabel("Месяц с 2022 года")
+        # Преобразуем ось X к датам
+        historical_sales.index = pd.to_datetime(base_year + (historical_sales.index - 1) // 12, format='%Y') + \
+                                 pd.to_timedelta(((historical_sales.index - 1) % 12) * 30, unit='D')
+
+        forecast_sales.index = pd.to_datetime(forecast_sales.index)
+
+        plt.plot(historical_sales.index, historical_sales.values, label="Фактические данные (2022–2024)", marker="o")
+        plt.plot(forecast_sales.index, forecast_sales.values, label="Прогноз 2025", marker="o", linestyle="dashed")
+
+        # Улучшенная разметка оси X
+        plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=3))  # Каждые 3 месяца
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))  # Формат YYYY-MM
+        plt.xticks(rotation=45)  # Наклон для удобочитаемости
+
+        plt.xlabel("Месяц")
         plt.ylabel("Общая сумма продаж")
         plt.title("Динамика продаж (2022–2025)")
         plt.legend()
