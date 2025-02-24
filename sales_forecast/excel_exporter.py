@@ -9,7 +9,7 @@ class ExcelExporter:
         if file_path:
             wb = Workbook()
             ws = wb.active
-            ws.append(["Месяц", "Количество чеков", "Средняя сумма чека", "Общая сумма продаж"])
+            ws.append(["Дата", "Количество чеков", "Средняя сумма чека", "Общая сумма продаж"])
             for _, row in data.iterrows():
                 ws.append(row.tolist())
             wb.save(file_path)

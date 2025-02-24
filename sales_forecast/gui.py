@@ -14,13 +14,13 @@ class SalesForecastApp:
         self.data_loader = DataLoader()
         self.forecaster = None
 
-        self.label = tk.Label(root, text="Выберите файл с данными (CSV)")
+        self.label = tk.Label(root, text="Выберите файл с данными (CSV или Excel)")
         self.label.pack(pady=10)
 
         self.button = tk.Button(root, text="Загрузить данные", command=self.load_data)
         self.button.pack(pady=10)
 
-        self.process_button = tk.Button(root, text="Рассчитать прогноз", command=self.process_data, state=tk.DISABLED)
+        self.process_button = tk.Button(root, text="Рассчитать прогноз по дням", command=self.process_data, state=tk.DISABLED)
         self.process_button.pack(pady=10)
 
         self.save_button = tk.Button(root, text="Сохранить в Excel", command=self.save_results, state=tk.DISABLED)
@@ -39,7 +39,7 @@ class SalesForecastApp:
 
         self.forecaster.forecast()
         self.save_button.config(state=tk.NORMAL)
-        messagebox.showinfo("Успех", "Прогноз рассчитан!")
+        messagebox.showinfo("Успех", "Прогноз продаж по дням на 2025 год рассчитан!")
 
     def save_results(self):
         if self.forecaster.forecast_df is None:
@@ -47,4 +47,4 @@ class SalesForecastApp:
             return
 
         if ExcelExporter.save_to_excel(self.forecaster.forecast_df):
-            messagebox.showinfo("Успех", "Файл сохранен!")
+            messagebox.showinfo("Успех", "Прогноз сохранен в Excel!")

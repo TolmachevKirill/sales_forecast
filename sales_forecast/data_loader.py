@@ -14,31 +14,21 @@ class DataLoader:
             return False
 
         try:
-            # Загружаем Excel
             df = pd.read_excel(file_path, engine="openpyxl")
-            print("Заголовки столбцов:", df.columns)  # Проверяем заголовки
+            print("Заголовки столбцов:", df.columns)
 
-            # Убираем ненужные 'Unnamed' столбцы
             df = df.loc[:, ~df.columns.str.contains("^Unnamed")]
-
-            # Ожидаемые столбцы
             required_columns = ["По дням", "Количество чеков", "Средняя сумма чека", "Сумма продажи"]
             missing_columns = [col for col in required_columns if col not in df.columns]
             if missing_columns:
                 messagebox.showerror("Ошибка", f"Отсутствуют столбцы: {missing_columns}")
                 return False
 
-            # Преобразуем "По дням" в дату
             df["По дням"] = pd.to_datetime(df["По дням"], errors="coerce", dayfirst=True)
-
-            # Проверяем, есть ли нераспознанные даты
             if df["По дням"].isna().sum() > 0:
                 messagebox.showerror("Ошибка", "Некоторые даты не распознаны! Проверь формат.")
                 print("Проблемные даты:", df[df["По дням"].isna()])
                 return False
-
-            # Добавляем столбец month_number
-            df["month_number"] = (df["По дням"].dt.year - 2022) * 12 + df["По дням"].dt.month
 
             # Переименовываем столбцы
             df.rename(columns={
@@ -52,6 +42,9 @@ class DataLoader:
             df["checks"] = df["checks"].astype(str).str.replace(",", "").astype(int)
             df["avg_check"] = df["avg_check"].astype(str).str.replace(",", ".").astype(float)
             df["total_sales"] = df["total_sales"].astype(str).str.replace(" ", "").str.replace(",", ".").astype(float)
+
+            # Добавляем номер дня от минимальной даты
+            df["day_number"] = (df["date"] - df["date"].min()).dt.days + 1
 
             self.df = df
             return True
